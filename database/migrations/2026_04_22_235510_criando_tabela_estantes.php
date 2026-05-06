@@ -8,17 +8,17 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('estantes', function (Blueprint $table) {
+        Schema::create('estante', function (Blueprint $table) {
             $table->id();
             $table->string('nome');
-            $table->timestamps();
-
-            $table->foreignId('id_usuario')->constrained('usuarios')->cascadeOnDelete();
+            $table->foreignId('id_usuario')->constrained('usuario')->cascadeOnDelete();
+            $table->timestamp('criado_em')->useCurrent();
+            $table->timestamp('atualizado_em')->useCurrent()->useCurrentOnUpdate();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('estantes');
+        Schema::dropIfExists('estante');
     }
 };

@@ -12,8 +12,10 @@ Route::prefix('livros')->group(function () {
     Route::get('/buscar', [LivroController::class, 'buscar'])->name('livros.buscar');
     Route::get('/categorias', [LivroController::class, 'categorias'])->name('livros.categorias');
     Route::get('/{id}', [LivroController::class, 'show'])->name('livros.show');
-    Route::post('/avaliar', [NotaController::class, 'avaliar'])->name('livros.avaliar');
-    Route::post('/comentar', [ComentarioLivroController::class, 'comentar'])->name('livros.comentar');
+    Route::post('/avaliar', [NotaController::class, 'avaliar'])->name('livros.avaliar')->middleware('auth');
+    Route::post('/comentar', [ComentarioLivroController::class, 'comentar'])->name('livros.comentar')->middleware('auth');
+    Route::post('/comentarios/{comentario}/responder', [ComentarioLivroController::class, 'responder'])->name('livros.comentarios.responder')->middleware('auth');
+    Route::delete('/comentarios/{comentario}', [ComentarioLivroController::class, 'deletar'])->name('livros.comentarios.deletar')->middleware('auth');
 });
 
 Route::middleware('guest')->group(function () {

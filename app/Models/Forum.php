@@ -6,12 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Forum extends Model
 {
-    protected $table = 'foruns';
+    protected $table = 'forum';
+
+    const CREATED_AT = 'criado_em';
+    const UPDATED_AT = 'atualizado_em';
 
     protected $fillable = [
         'nome',
         'descricao',
-        'id_usuario'
+        'id_usuario',
     ];
 
     public function usuario()

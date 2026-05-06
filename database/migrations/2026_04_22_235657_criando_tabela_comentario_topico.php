@@ -11,10 +11,14 @@ return new class extends Migration
         Schema::create('comentario_topico', function (Blueprint $table) {
             $table->id();
             $table->text('texto');
-            $table->timestamps();
-
-            $table->foreignId('id_usuario')->constrained('usuarios')->cascadeOnDelete();
-            $table->foreignId('id_topico')->constrained('topicos')->cascadeOnDelete();
+            $table->foreignId('id_usuario')->constrained('usuario')->cascadeOnDelete();
+            $table->foreignId('id_topico')->constrained('topico')->cascadeOnDelete();
+            $table->foreignId('id_comentario_pai')
+                ->nullable()
+                ->constrained('comentario_topico')
+                ->nullOnDelete();
+            $table->timestamp('criado_em')->useCurrent();
+            $table->timestamp('atualizado_em')->useCurrent()->useCurrentOnUpdate();
         });
     }
 

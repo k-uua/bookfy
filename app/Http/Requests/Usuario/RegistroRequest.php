@@ -15,7 +15,7 @@ class RegistroRequest extends FormRequest
     {
         return [
             'nome'  => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:usuarios,email',
+            'email' => 'required|email|max:255|unique:usuario,email',
             'senha' => 'required|string|min:8|confirmed',
         ];
     }

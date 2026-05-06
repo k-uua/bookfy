@@ -8,16 +8,17 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('conquistas', function (Blueprint $table) {
+        Schema::create('conquista', function (Blueprint $table) {
             $table->id();
             $table->string('nome');
             $table->string('descricao');
-            $table->timestamps();
+            $table->timestamp('criado_em')->useCurrent();
+            $table->timestamp('atualizado_em')->useCurrent()->useCurrentOnUpdate();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('conquistas');
+        Schema::dropIfExists('conquista');
     }
 };

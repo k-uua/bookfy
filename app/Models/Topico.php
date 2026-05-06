@@ -6,13 +6,16 @@ use Illuminate\Database\Eloquent\Model;
 
 class Topico extends Model
 {
-    protected $table = 'topicos';
+    protected $table = 'topico';
+
+    const CREATED_AT = 'criado_em';
+    const UPDATED_AT = 'atualizado_em';
 
     protected $fillable = [
         'titulo',
         'id_usuario',
         'id_forum',
-        'id_livro'
+        'id_livro',
     ];
 
     public function usuario()

@@ -6,11 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Estante extends Model
 {
-    protected $table = 'estantes';
+    protected $table = 'estante';
+
+    const CREATED_AT = 'criado_em';
+    const UPDATED_AT = 'atualizado_em';
 
     protected $fillable = [
         'nome',
-        'id_usuario'
+        'id_usuario',
     ];
 
     public function usuario()

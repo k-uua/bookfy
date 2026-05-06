@@ -6,7 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Nota extends Model
 {
-    protected $table = 'notas';
+    protected $table = 'nota';
+
+    const CREATED_AT = 'criado_em';
+    const UPDATED_AT = 'atualizado_em';
 
     protected $fillable = [
         'nota',

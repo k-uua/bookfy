@@ -8,13 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('notas', function (Blueprint $table) {
+        Schema::create('nota', function (Blueprint $table) {
             $table->id();
             $table->decimal('nota', 3, 1);
-            $table->timestamps();
+            $table->timestamp('criado_em')->useCurrent();
+            $table->timestamp('atualizado_em')->useCurrent()->useCurrentOnUpdate();
 
-            $table->foreignId('id_usuario')->constrained('usuarios')->cascadeOnDelete();
-            $table->foreignId('id_livro')->constrained('livros')->cascadeOnDelete();
+            $table->foreignId('id_usuario')->constrained('usuario')->cascadeOnDelete();
+            $table->foreignId('id_livro')->constrained('livro')->cascadeOnDelete();
 
             $table->unique(['id_usuario', 'id_livro']);
         });
@@ -22,6 +23,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('notas');
+        Schema::dropIfExists('nota');
     }
 };

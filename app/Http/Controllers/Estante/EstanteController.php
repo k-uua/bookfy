@@ -15,7 +15,7 @@ class EstanteController extends Controller
         $estantes = Auth::user()
             ->estantes()
             ->withCount('livros')
-            ->orderBy('created_at', 'desc')
+            ->orderBy('criado_em', 'desc')
             ->get();
 
         return view('estante.index', compact('estantes'));
@@ -55,7 +55,7 @@ class EstanteController extends Controller
 
         // 3. Verifica se o livro já está na estante para evitar duplicatas.
         $jaAdicionado = $estante->livros()
-            ->where('livros.id', $livro->id)
+            ->where('livro.id', $livro->id)
             ->exists();
 
         if ($jaAdicionado) {

@@ -3,24 +3,35 @@
 namespace App\Http\Controllers\Livro;
 
 use App\Http\Controllers\Controller;
-use App\Models\Nota;
 use App\Http\Requests\Livro\AvaliarLivroRequest;
+use App\Models\Livro;
+use App\Models\Nota;
+use Illuminate\Support\Facades\Auth;
 
 class NotaController extends Controller
 {
     public function avaliar(AvaliarLivroRequest $request)
     {
-        Nota::updateOrCreate(
+        $dados = $request->validated();
+
+        // Garante que o livro existe localmente antes de registrar a nota.
+        $livro = Livro::firstOrCreate(
+            ['google_books_id' => $dados['google_books_id']],
             [
-                'id_usuario' => $request->id_usuario,
-                'id_livro' => $request->id_livro,
-            ],
-            [
-                'nota' => $request->nota,
+                'titulo'            => $dados['titulo'],
+                'capa_livro_url'    => $dados['capa_livro_url'] ?? null,
+                'descricao'         => $dados['descricao'] ?? null,
+                'paginas'           => $dados['paginas'] ?? null,
+                'data_lancamento'   => $dados['data_lancamento'] ?? null,
+                'nota_google_books' => $dados['nota_google_books'] ?? null,
             ]
         );
 
-        return redirect()->route('livros.show', ['id' => $request->id_livro])
-            ->with('success', 'Nota registrada com sucesso!');
+        Nota::updateOrCreate(
+            ['id_usuario' => Auth::id(), 'id_livro' => $livro->id],
+            ['nota' => $dados['nota']]
+        );
+
+        return back()->with('success', 'Sua avaliação foi registrada!');
     }
 }

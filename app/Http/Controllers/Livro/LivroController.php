@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Livro;
 
 use App\Http\Controllers\Controller;
+use App\Models\ComentarioLivro;
+use App\Models\Livro;
+use App\Models\Nota;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -27,37 +30,77 @@ class LivroController extends Controller
 
     public function buscar(Request $request)
     {
-        $query = $request->input('buscar');
+        $query = trim($request->input('buscar', ''));
 
         if (empty($query)) {
             return redirect()->route('livros.index');
         }
 
-        $pagina = (int) $request->input('page', 1);
+        $pagina    = (int) $request->input('page', 1);
         $porPagina = 10;
-        $startIndex = ($pagina - 1) * $porPagina;
+
+        // Buscamos o dobro por página para ter candidatos suficientes ao reordenar.
+        $buscarMax  = $porPagina * 2;
+        $startIndex = ($pagina - 1) * $buscarMax;
 
         $response = Http::get($this->apiUrl('/volumes'), [
             'q'          => $query,
             'startIndex' => $startIndex,
-            'maxResults' => $porPagina,
+            'maxResults' => $buscarMax,
+            'orderBy'    => 'relevance',
+            'printType'  => 'books',
             'key'        => $this->apiKey(),
         ]);
 
         if ($response->failed()) {
-            return response()->json([
-                'erro'   => 'Falha na API externa',
-                'status' => $response->status(),
-            ]);
+            return back()->withErrors(['erro' => 'Falha na busca. Tente novamente.']);
         }
 
         $dados = $response->json();
+        $itens = $dados['items'] ?? [];
+        $total = min($dados['totalItems'] ?? 0, 1000);
 
-        $livros = $dados['items'] ?? [];
-        $total  = min($dados['totalItems'] ?? 0, 1000);
+        // ── Pontuação local de relevância ─────────────────────────────────────
+        $queryNorm = mb_strtolower($query);
+
+        $ordenados = collect($itens)
+            ->map(function (array $item) use ($queryNorm): array {
+                $info   = $item['volumeInfo'] ?? [];
+                $titulo = mb_strtolower($info['title'] ?? '');
+                $score  = 0;
+
+                // Correspondência no título (peso alto)
+                if ($titulo === $queryNorm) {
+                    $score += 80;
+                } elseif (str_starts_with($titulo, $queryNorm)) {
+                    $score += 70;
+                } elseif (str_contains($titulo, $queryNorm)) {
+                    $score += 45;
+                }
+
+                // Sinais de qualidade do item
+                if (!empty($info['imageLinks']))  $score += 100; // tem capa
+                if (!empty($info['description'])) $score += 5;  // tem sinopse
+
+                $qtdAvaliacoes = (int) ($info['ratingsCount']  ?? 0);
+                $mediaNotas    = (float) ($info['averageRating'] ?? 0);
+
+                if ($qtdAvaliacoes > 0) {
+                    // Escala logarítmica: 10 avaliações ≈ +8 pts, 1000 ≈ +24 pts
+                    $score += (int) (log10($qtdAvaliacoes + 1) * 8);
+                    // Nota média: máximo +10 pontos (para 5 estrelas)
+                    $score += (int) ($mediaNotas * 2);
+                }
+
+                $item['_score'] = $score;
+                return $item;
+            })
+            ->sortByDesc('_score')
+            ->values()
+            ->take($porPagina);
 
         $paginacao = new LengthAwarePaginator(
-            $livros,
+            $ordenados,
             $total,
             $porPagina,
             $pagina,
@@ -91,9 +134,32 @@ class LivroController extends Controller
 
         $estantes = Auth::check() ? Auth::user()->estantes : collect();
 
+        $livroLocal  = Livro::where('google_books_id', $id)->first();
+        $comentarios = $livroLocal ? ComentarioLivro::doLivro($livroLocal->id) : collect();
+
+        $notaUsuario     = null;
+        $notasPorUsuario = collect();
+
+        if ($livroLocal) {
+            // Nota do usuário autenticado para exibir no widget de estrelas.
+            if (Auth::check()) {
+                $notaUsuario = Nota::where('id_usuario', Auth::id())
+                    ->where('id_livro', $livroLocal->id)
+                    ->first();
+            }
+
+            // Notas de todos os comentadores em uma única query (evita N+1).
+            $notasPorUsuario = Nota::where('id_livro', $livroLocal->id)
+                ->get()
+                ->keyBy('id_usuario');
+        }
+
         return view('livro.show', [
-            'livro'    => $livro,
-            'estantes' => $estantes,
+            'livro'           => $livro,
+            'estantes'        => $estantes,
+            'comentarios'     => $comentarios,
+            'notaUsuario'     => $notaUsuario,
+            'notasPorUsuario' => $notasPorUsuario,
         ]);
     }
 

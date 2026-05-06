@@ -6,13 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class Autor extends Model
 {
-    protected $table = 'autores';
+    protected $table = 'autor';
+
+    public $timestamps = false;
 
     protected $fillable = [
-        'nome'
+        'nome',
     ];
-
-    public $timestamps = false; 
 
     public function livros()
     {

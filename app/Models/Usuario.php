@@ -10,7 +10,10 @@ class Usuario extends Authenticatable
 {
     use Notifiable;
 
-    protected $table = 'usuarios';
+    protected $table = 'usuario';
+
+    const CREATED_AT = 'criado_em';
+    const UPDATED_AT = 'atualizado_em';
 
     protected $fillable = [
         'nome',
@@ -30,12 +33,7 @@ class Usuario extends Authenticatable
         ];
     }
 
-    protected function nivel(): Attribute
-    {
-        return Attribute::make(
-            get: fn () => (int) floor(sqrt(($this->xp ?? 0) / 10)),
-        );
-    }
+    // ── Auth ─────────────────────────────────────────────────────────────────
 
     public function getAuthPassword(): string
     {
@@ -46,6 +44,17 @@ class Usuario extends Authenticatable
     {
         return 'senha';
     }
+
+    // ── Accessors ─────────────────────────────────────────────────────────────
+
+    protected function nivel(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => (int) floor(sqrt(($this->xp ?? 0) / 10)),
+        );
+    }
+
+    // ── Relacionamentos ───────────────────────────────────────────────────────
 
     public function notas()
     {
