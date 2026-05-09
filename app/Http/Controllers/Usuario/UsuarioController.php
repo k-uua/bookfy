@@ -28,7 +28,7 @@ class UsuarioController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('livros.index'))
+        return redirect()->intended(route('home'))
             ->with('success', 'Bem-vindo de volta, ' . Auth::user()->nome . '!');
     }
 
@@ -43,7 +43,7 @@ class UsuarioController extends Controller
 
         Auth::login($usuario);
 
-        return redirect()->route('livros.index')
+        return redirect()->route('home')
             ->with('success', 'Conta criada com sucesso! Bem-vindo, ' . $usuario->nome . '!');
     }
 

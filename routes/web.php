@@ -26,6 +26,7 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::get('/home', [LivroController::class, 'home'])->name('home');
     Route::get('/perfil', [UsuarioController::class, 'perfil'])->name('usuario.perfil');
     Route::post('/logout', [UsuarioController::class, 'logout'])->name('usuario.logout');
 

@@ -1,89 +1,55 @@
-@extends('layouts.app')
+@extends('layouts.main')
 @section('titulo', 'Registrar')
 @section('conteudo')
 
-<div class="container my-5">
-    <div class="row justify-content-center">
-        <div class="col-sm-10 col-md-7 col-lg-5">
+<x-auth-card titulo="Criar conta">
+    <x-slot:subtitulo>
+        Já tem conta?
+        <a href="{{ route('usuario.login') }}"
+           class="text-blue-400 hover:text-blue-300 transition-colors font-medium">
+            Entrar
+        </a>
+    </x-slot:subtitulo>
 
-            <div class="card shadow-sm">
-                <div class="card-body p-4 p-md-5">
-                    <h2 class="card-title mb-1 fw-bold">Criar conta</h2>
-                    <p class="text-muted mb-4">
-                        Já tem conta?
-                        <a href="{{ route('usuario.login') }}">Entrar</a>
-                    </p>
+    <form action="{{ route('usuario.registrar') }}" method="post" novalidate class="space-y-4">
+        @csrf
 
-                    <form action="{{ route('usuario.registrar') }}" method="post" novalidate>
-                        @csrf
+        <x-input-field
+            name="nome"
+            label="Nome"
+            placeholder="Seu nome"
+            autofocus
+            required
+        />
 
-                        <div class="mb-3">
-                            <label for="nome" class="form-label">Nome</label>
-                            <input
-                                type="text"
-                                id="nome"
-                                name="nome"
-                                value="{{ old('nome') }}"
-                                class="form-control @error('nome') is-invalid @enderror"
-                                placeholder="Seu nome"
-                                autofocus
-                                required
-                            >
-                            @error('nome')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+        <x-input-field
+            name="email"
+            type="email"
+            label="E-mail"
+            placeholder="seu@email.com"
+            required
+        />
 
-                        <div class="mb-3">
-                            <label for="email" class="form-label">E-mail</label>
-                            <input
-                                type="email"
-                                id="email"
-                                name="email"
-                                value="{{ old('email') }}"
-                                class="form-control @error('email') is-invalid @enderror"
-                                placeholder="seu@email.com"
-                                required
-                            >
-                            @error('email')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+        <x-input-field
+            name="senha"
+            type="password"
+            label="Senha"
+            placeholder="Mínimo 8 caracteres"
+            required
+        />
 
-                        <div class="mb-3">
-                            <label for="senha" class="form-label">Senha</label>
-                            <input
-                                type="password"
-                                id="senha"
-                                name="senha"
-                                class="form-control @error('senha') is-invalid @enderror"
-                                placeholder="Mínimo 8 caracteres"
-                                required
-                            >
-                            @error('senha')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+        <x-input-field
+            name="senha_confirmation"
+            type="password"
+            label="Confirmar senha"
+            placeholder="Repita a senha"
+            required
+        />
 
-                        <div class="mb-4">
-                            <label for="senha_confirmation" class="form-label">Confirmar senha</label>
-                            <input
-                                type="password"
-                                id="senha_confirmation"
-                                name="senha_confirmation"
-                                class="form-control"
-                                placeholder="Repita a senha"
-                                required
-                            >
-                        </div>
-
-                        <button type="submit" class="btn btn-primary w-100">Criar conta</button>
-                    </form>
-                </div>
-            </div>
-
-        </div>
-    </div>
-</div>
+        <x-primary-button block class="mt-2">
+            Criar conta
+        </x-primary-button>
+    </form>
+</x-auth-card>
 
 @endsection
