@@ -50,6 +50,7 @@ class UsuarioController extends Controller
     public function perfil()
     {
         /** @var \App\Models\Usuario $usuario */
+
         $usuario = Auth::user()->load(['conquistas', 'notas', 'estantes']);
 
         $xp              = $usuario->xp ?? 0;

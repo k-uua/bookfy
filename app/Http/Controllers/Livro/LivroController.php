@@ -26,26 +26,10 @@ class LivroController extends Controller
     }
 
     /**
-     * Landing page pública para visitantes não autenticados.
-     * Usuários logados são redirecionados para a home (/home).
-     */
-    public function index(Request $request)
-    {
-        if (Auth::check()) {
-            return redirect()->route('home');
-        }
-
-        $capas      = $this->buscarCapasHero();
-        $interacoes = $this->buscarInteracoesRecentes(4);
-
-        return view('index', compact('capas', 'interacoes'));
-    }
-
-    /**
      * Home autenticada — exibe recomendações personalizadas, livros mais bem
      * avaliados, interações recentes e o painel de progresso de conquistas.
      */
-    public function home(Request $request)
+    public function home()
     {
         $usuario = Auth::user();
 
@@ -217,63 +201,6 @@ class LivroController extends Controller
         }, $conquistas);
     }
 
-    private function buscarCapasHero(): array
-    {
-        return Cache::remember('hero_capas_v4', now()->addHours(6), function () {
-            $categorias = [
-                'subject:fiction',
-                'subject:romance',
-                'subject:fantasy',
-                'subject:science fiction',
-                'subject:mystery',
-                'subject:thriller',
-                'subject:drama',
-                'subject:adventure',
-            ];
-
-            $apiUrl = $this->apiUrl('/volumes');
-            $apiKey = $this->apiKey();
-
-            try {
-                $respostas = Http::pool(fn (Pool $pool) => array_map(
-                    fn ($categoria) => $pool->timeout(6)->get($apiUrl, [
-                        'q'          => $categoria,
-                        'maxResults' => 12,
-                        'orderBy'    => 'relevance',
-                        'printType'  => 'books',
-                        'langRestrict' => 'en',
-                        'key'        => $apiKey,
-                    ]),
-                    $categorias
-                ));
-
-                return collect($respostas)
-                    ->flatMap(function ($resposta) {
-                        if (!($resposta instanceof Response) || $resposta->failed()) {
-                            return [];
-                        }
-
-                        return collect($resposta->json()['items'] ?? [])
-                            ->filter(fn ($item) => $this->capasValidas($item))
-                            ->map(fn ($item) => str_replace(
-                                'http://',
-                                'https://',
-                                $item['volumeInfo']['imageLinks']['thumbnail']
-                                ?? $item['volumeInfo']['imageLinks']['smallThumbnail']
-                                ?? null
-                            ))
-                            ->filter();
-                    })
-                    ->unique()       // Remove capas duplicadas entre gêneros.
-                    ->shuffle()      // Mistura os gêneros no mosaico.
-                    ->values()
-                    ->all();
-
-            } catch (\Throwable) {
-                return [];
-            }
-        });
-    }
 
     /**
      * Valida se um item da API é adequado para o mosaico:
@@ -314,7 +241,7 @@ class LivroController extends Controller
         }
 
         $pagina    = (int) $request->input('page', 1);
-        $porPagina = 10;
+        $porPagina = 20;
 
         // Buscamos o dobro por página para ter candidatos suficientes ao reordenar.
         $buscarMax  = $porPagina * 2;

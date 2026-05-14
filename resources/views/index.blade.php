@@ -146,7 +146,7 @@ $forunsPlaceholder = [
         />
 
         <div class="space-y-3">
-            @foreach ($forunsPlaceholder as $forum)
+            @foreach ($foruns as $forum)
                 <a href="{{ route('usuario.login') }}"
                    class="flex items-center gap-4 rounded-2xl bg-[#161616] border border-zinc-800/60 px-5 py-4
                           hover:border-zinc-600 transition-colors group">
@@ -161,10 +161,10 @@ $forunsPlaceholder = [
 
                     <div class="flex-1 min-w-0">
                         <p class="font-semibold text-white text-sm truncate mb-0.5 group-hover:text-blue-400 transition-colors">
-                            {{ $forum['titulo'] }}
+                            {{ $forum->nome }}
                         </p>
                         <p class="text-zinc-500 text-xs leading-relaxed line-clamp-1">
-                            {{ $forum['descricao'] }}
+                            {{ $forum->descricao}}
                         </p>
                     </div>
 
@@ -173,7 +173,7 @@ $forunsPlaceholder = [
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
                         </svg>
-                        <span>{{ $forum['membros'] }} Membros</span>
+                        <span>{{ $forum->topicos->count() }} Membros</span>
                     </div>
                 </a>
             @endforeach

@@ -1,5 +1,5 @@
 <header class="sticky top-0 z-50 bg-[#0d0d0d]/95 backdrop-blur border-b border-zinc-800">
-    <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-6">
+    <nav class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-6">
 
         @php
             $rotaInicio = Auth::check() ? route('home') : route('livros.index');
@@ -12,8 +12,8 @@
             Bookfy
         </a>
 
-        {{-- Links centrais --}}
-        <ul class="hidden md:flex items-center gap-7 text-sm font-medium">
+        {{-- Links centrais — absolutos para ficarem na metade exata da página --}}
+        <ul class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-7 text-sm font-medium">
             <li>
                 <a href="{{ $rotaInicio }}"
                    class="transition-colors {{ $inicioAtivo ? 'text-white' : 'text-zinc-400 hover:text-white' }}">
@@ -21,7 +21,10 @@
                 </a>
             </li>
             <li>
-                <a href="#" class="text-zinc-400 hover:text-white transition-colors">Fóruns</a>
+                <a href="{{ Auth::check() ? route('forum.index') : route('usuario.login') }}"
+                   class="transition-colors {{ request()->routeIs('forum.*') ? 'text-white' : 'text-zinc-400 hover:text-white' }}">
+                    Fóruns
+                </a>
             </li>
             <li>
                 <a href="#" class="text-zinc-400 hover:text-white transition-colors">Livros</a>
@@ -54,7 +57,7 @@
                        class="bg-transparent text-sm text-white placeholder-zinc-500 outline-none w-36
                               focus:w-48 transition-all duration-300 min-w-0">
             </form>
-
+<!-- 
             {{-- Sininho --}}
             <button type="button"
                     class="w-9 h-9 flex items-center justify-center rounded-full text-zinc-400
@@ -64,7 +67,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                 </svg>
-            </button>
+            </button> -->
 
             {{-- Usuário / Login --}}
             @guest

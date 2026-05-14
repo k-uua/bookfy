@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Estante\EstanteController;
+use App\Http\Controllers\Forum\ForumController;
+use App\Http\Controllers\Forum\TopicoController;
+use App\Http\Controllers\Index\IndexController;
 use App\Http\Controllers\Livro\ComentarioLivroController;
 use App\Http\Controllers\Livro\LivroController;
 use App\Http\Controllers\Livro\NotaController;
@@ -8,7 +11,7 @@ use App\Http\Controllers\Usuario\UsuarioController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('livros')->group(function () {
-    Route::get('/', [LivroController::class, 'index'])->name('livros.index');
+    Route::get('/', [IndexController::class, 'index'])->name('livros.index');
     Route::get('/buscar', [LivroController::class, 'buscar'])->name('livros.buscar');
     Route::get('/categorias', [LivroController::class, 'categorias'])->name('livros.categorias');
     Route::get('/{id}', [LivroController::class, 'show'])->name('livros.show');
@@ -31,8 +34,19 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [UsuarioController::class, 'logout'])->name('usuario.logout');
 
     Route::prefix('estantes')->group(function () {
-        Route::get('/', [EstanteController::class, 'index'])->name('estante.index');
-        Route::get('/{estante}', [EstanteController::class, 'show'])->name('estante.show');
-        Route::post('/adicionar', [EstanteController::class, 'adicionar'])->name('estante.adicionar');
+        Route::get('/',              [EstanteController::class, 'index'])->name('estante.index');
+        Route::post('/',             [EstanteController::class, 'store'])->name('estante.store');
+        Route::get('/{estante}',     [EstanteController::class, 'show'])->name('estante.show');
+        Route::patch('/{estante}',   [EstanteController::class, 'update'])->name('estante.update');
+        Route::delete('/{estante}',  [EstanteController::class, 'destroy'])->name('estante.destroy');
+        Route::post('/adicionar',    [EstanteController::class, 'adicionar'])->name('estante.adicionar');
+    });
+
+    Route::prefix('foruns')->name('forum.')->group(function () {
+        Route::get('/',                 [ForumController::class, 'index'])->name('index');
+        Route::get('/criar',            [ForumController::class, 'create'])->name('create');
+        Route::post('/',                [ForumController::class, 'store'])->name('store');
+        Route::get('/{forum}',          [ForumController::class, 'show'])->name('show');
+        Route::post('/{forum}/topicos', [TopicoController::class, 'store'])->name('topicos.store');
     });
 });

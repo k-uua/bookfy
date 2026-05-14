@@ -1,83 +1,108 @@
-@extends('layouts.app')
+@extends('layouts.main')
 @section('titulo', $estante->nome)
-@section('conteudo')
 
 @php
-    $statusLabel = [
-        'quero_ler'  => ['label' => 'Quero ler',  'class' => 'bg-secondary'],
-        'lendo'      => ['label' => 'Lendo',       'class' => 'bg-primary'],
-        'lido'       => ['label' => 'Lido',        'class' => 'bg-success'],
+    $statusBadge = [
+        'quero_ler' => ['label' => 'Quero ler', 'classe' => 'bg-zinc-700 text-zinc-200'],
+        'lendo'     => ['label' => 'Lendo',     'classe' => 'bg-blue-600 text-white'],
+        'lido'      => ['label' => 'Lido',      'classe' => 'bg-emerald-600 text-white'],
     ];
 @endphp
 
-<div class="container my-5">
+@section('conteudo')
 
-    {{-- Cabeçalho da estante --}}
-    <div class="d-flex align-items-center gap-3 mb-4">
-        <a href="{{ route('estante.index') }}" class="btn btn-outline-secondary btn-sm">
-            &larr; Voltar
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    {{-- Cabeçalho --}}
+    <div class="flex items-start gap-4 mb-8 flex-wrap">
+        <a href="{{ route('estante.index') }}"
+           class="flex items-center gap-1.5 text-zinc-400 hover:text-white text-sm
+                  transition-colors shrink-0 mt-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Voltar
         </a>
-        <div>
-            <h2 class="fw-bold mb-0">{{ $estante->nome }}</h2>
-            <span class="text-muted small">
+
+        <div class="flex-1 min-w-0">
+            <h1 class="text-2xl font-bold text-white truncate">{{ $estante->nome }}</h1>
+            <p class="text-zinc-500 text-sm mt-1">
                 {{ $livros->count() }} {{ Str::plural('livro', $livros->count()) }}
-            </span>
+            </p>
         </div>
     </div>
 
     @if ($livros->isEmpty())
-        <div class="text-center py-5">
-            <p class="text-muted fs-5">Esta estante está vazia.</p>
-            <a href="{{ route('livros.index') }}" class="btn btn-primary mt-2">Adicionar livros</a>
+
+        {{-- ──── Estado vazio ──── --}}
+        <div class="text-center py-20">
+            <div class="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mx-auto mb-4 text-3xl">
+                📖
+            </div>
+            <p class="text-zinc-200 text-lg font-medium mb-1">Esta estante está vazia</p>
+            <p class="text-zinc-500 text-sm mb-6">
+                Comece adicionando livros para vê-los aqui.
+            </p>
+            <a href="{{ route('home') }}"
+               class="inline-block bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold
+                      px-6 py-2.5 rounded-lg transition-colors shadow-lg shadow-blue-900/30">
+                Adicionar livros
+            </a>
         </div>
+
     @else
-        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-4">
+
+        {{-- ──── Grid de livros ──── --}}
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4">
             @foreach ($livros as $livro)
                 @php
                     $status = $livro->pivot->status ?? 'quero_ler';
-                    $badge  = $statusLabel[$status] ?? $statusLabel['quero_ler'];
+                    $badge  = $statusBadge[$status] ?? $statusBadge['quero_ler'];
                 @endphp
-                <div class="col">
-                    <div class="card h-100 shadow-sm border-0">
 
-                        {{-- Capa --}}
-                        <a href="{{ route('livros.show', $livro->google_books_id) }}"
-                           class="text-decoration-none">
-                            <div class="text-center bg-light pt-3 px-3"
-                                 style="min-height: 200px; display:flex; align-items:center; justify-content:center;">
-                                @if ($livro->capa_livro_url)
-                                    <img src="{{ $livro->capa_livro_url }}"
-                                         alt="Capa de {{ $livro->titulo }}"
-                                         class="img-fluid rounded"
-                                         style="max-height: 190px; object-fit: contain;">
-                                @else
-                                    <div class="text-muted fs-1">📖</div>
-                                @endif
+                <a href="{{ route('livros.show', $livro->google_books_id) }}"
+                   class="group flex flex-col bg-[#161616] hover:bg-[#1a1a1a]
+                          border border-zinc-800/60 hover:border-zinc-700
+                          rounded-2xl overflow-hidden transition-colors">
+
+                    {{-- Capa --}}
+                    <div class="aspect-[2/3] bg-zinc-900 overflow-hidden relative">
+                        @if ($livro->capa_livro_url)
+                            <img src="{{ $livro->capa_livro_url }}"
+                                 alt="Capa de {{ $livro->titulo }}"
+                                 class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                 loading="lazy">
+                        @else
+                            <div class="w-full h-full flex items-center justify-center text-zinc-700 text-4xl">
+                                📖
                             </div>
-                        </a>
+                        @endif
 
-                        <div class="card-body d-flex flex-column">
-                            <h6 class="card-title fw-semibold mb-1" style="line-height:1.3;">
-                                <a href="{{ route('livros.show', $livro->google_books_id) }}"
-                                   class="text-dark text-decoration-none stretched-link">
-                                    {{ $livro->titulo }}
-                                </a>
-                            </h6>
-
-                            <div class="mt-auto pt-2 d-flex align-items-center justify-content-between">
-                                <span class="badge {{ $badge['class'] }} rounded-pill">
-                                    {{ $badge['label'] }}
-                                </span>
-                                @if ($livro->pivot->favorito)
-                                    <span title="Favorito">⭐</span>
-                                @endif
-                            </div>
-                        </div>
-
+                        {{-- Star de favorito sobreposta --}}
+                        @if ($livro->pivot->favorito)
+                            <span class="absolute top-2 right-2 text-amber-400 drop-shadow-lg" title="Favorito">
+                                ⭐
+                            </span>
+                        @endif
                     </div>
-                </div>
+
+                    {{-- Info --}}
+                    <div class="p-3 flex-1 flex flex-col gap-1.5">
+                        <h3 class="font-semibold text-white text-[13px] leading-snug line-clamp-2
+                                   group-hover:text-blue-400 transition-colors">
+                            {{ $livro->titulo }}
+                        </h3>
+
+                        <div class="mt-auto">
+                            <span class="inline-block text-[11px] font-medium px-2 py-0.5 rounded-full {{ $badge['classe'] }}">
+                                {{ $badge['label'] }}
+                            </span>
+                        </div>
+                    </div>
+                </a>
             @endforeach
         </div>
+
     @endif
 
 </div>

@@ -104,6 +104,11 @@
         </div>
     </div>
 
+    {{-- Seção de livros avaliados --}}
+    <div>
+
+    </div>    
+
 </div>
 
 @endsection

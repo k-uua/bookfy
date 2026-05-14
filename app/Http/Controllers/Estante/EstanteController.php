@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Estante;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Estante\AdicionarLivroRequest;
+use App\Http\Requests\Estante\EstanteRequest;
 use App\Models\Estante;
 use App\Models\Livro;
 use Illuminate\Support\Facades\Auth;
@@ -69,5 +70,50 @@ class EstanteController extends Controller
         ]);
 
         return back()->with('success', '"' . $livro->titulo . '" adicionado à estante "' . $estante->nome . '"!');
+    }
+
+    /**
+     * Cria uma nova estante vazia para o usuário autenticado.
+     */
+    public function store(EstanteRequest $request)
+    {
+        $dados = $request->validated();
+
+        $estante = Estante::create([
+            'nome'       => $dados['nome'],
+            'id_usuario' => Auth::id(),
+        ]);
+
+        return redirect()->route('estante.index')
+            ->with('success', 'Estante "' . $estante->nome . '" criada com sucesso!');
+    }
+
+    /**
+     * Atualiza o nome de uma estante.
+     */
+    public function update(EstanteRequest $request, Estante $estante)
+    {
+        abort_if($estante->id_usuario !== Auth::id(), 403);
+
+        $estante->update(['nome' => $request->validated()['nome']]);
+
+        return redirect()->route('estante.index')
+            ->with('success', 'Estante renomeada para "' . $estante->nome . '".');
+    }
+
+    /**
+     * Remove uma estante. Se ela não estiver vazia, a confirmação é exigida
+     * pelo frontend antes de chegar aqui — esta ação apenas executa.
+     * Os registros da tabela pivô (estante_livro) são removidos via detach,
+     * mas os livros em si nunca são apagados (são recursos compartilhados).
+     */
+    public function destroy(Estante $estante)
+    {
+        $nome = $estante->nome;
+        $estante->livros()->detach();
+        $estante->delete();
+
+        return redirect()->route('estante.index')
+            ->with('success', 'Estante "' . $nome . '" removida.');
     }
 }
