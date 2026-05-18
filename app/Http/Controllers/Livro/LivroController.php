@@ -331,12 +331,13 @@ class LivroController extends Controller
 
         $idioma    = $livro['volumeInfo']['language'] ?? 'en';
         $descricao = $livro['volumeInfo']['description'] ?? null;
-
+        $isbn = $livro['volumeInfo']['industryIdentifiers'][0]['identifier'] ?? null;
         if ($descricao && ! str_starts_with($idioma, 'pt')) {
             $livro['volumeInfo']['description'] = $this->traduzir($descricao);
         }
 
-        $estantes = Auth::check() ? Auth::user()->estantes : collect();
+        $estantes   = Auth::check() ? Auth::user()->estantes : collect();
+        $isFavorito = false;
 
         $livroLocal  = Livro::where('google_books_id', $id)->first();
         $comentarios = $livroLocal ? ComentarioLivro::doLivro($livroLocal->id) : collect();
@@ -364,11 +365,27 @@ class LivroController extends Controller
                 $notaBookfy            = round($notasPorUsuario->avg('nota'), 1);
                 $totalAvaliacoesBookfy = $notasPorUsuario->count();
             }
+
+            // Verifica se o livro está na estante "Favoritos" do usuário autenticado.
+            if (Auth::check()) {
+                $estanteFavoritos = Auth::user()
+                    ->estantes()
+                    ->where('nome', 'Favoritos')
+                    ->first();
+
+                if ($estanteFavoritos) {
+                    $isFavorito = $estanteFavoritos->livros()
+                        ->where('livro.id', $livroLocal->id)
+                        ->exists();
+                }
+            }
         }
 
         return view('livro.show', [
             'livro'                 => $livro,
+            'isbn'                  => $isbn,
             'estantes'              => $estantes,
+            'isFavorito'            => $isFavorito,
             'comentarios'           => $comentarios,
             'notaUsuario'           => $notaUsuario,
             'notasPorUsuario'       => $notasPorUsuario,
@@ -433,5 +450,10 @@ class LivroController extends Controller
         } catch (\Throwable) {
             return $texto;
         }
+    }
+
+    public function linkCompra(string $ISBN)
+    {
+        return redirect("https://www.amazon.com.br/s?k={$ISBN}&i=stripbooks");
     }
 }

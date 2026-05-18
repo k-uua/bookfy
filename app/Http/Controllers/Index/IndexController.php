@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Index;
 
 use App\Http\Controllers\Controller;
 use App\Models\ComentarioLivro;
-use App\Models\Forum;
 use App\Models\Nota;
+use App\Models\Postagem;
 use Illuminate\Http\Client\Pool;
 use Illuminate\Http\Client\Response;
 use Illuminate\Http\Request;
@@ -140,11 +140,12 @@ class IndexController extends Controller
             return redirect()->route('home');
         }
 
-        // 5 fóruns em alta — ordenados pela quantidade de tópicos (desc),
-        // com a contagem materializada via withCount() em uma única query.
-        $foruns = Forum::with('usuario')
-            ->withCount('topicos')
-            ->orderByDesc('topicos_count')
+        // 5 postagens em destaque — ordenadas pela quantidade de curtidas (desc),
+        // depois por contagem de comentários, depois por data de criação.
+        $postagens = Postagem::with(['usuario', 'livro'])
+            ->withCount(['comentarios', 'curtidoresPor as likes_count'])
+            ->orderByDesc('likes_count')
+            ->orderByDesc('comentarios_count')
             ->orderByDesc('criado_em')
             ->take(5)
             ->get();
@@ -152,7 +153,7 @@ class IndexController extends Controller
         $capas      = $this->buscarCapasHero();
         $interacoes = $this->buscarInteracoesRecentes(4);
 
-        return view('index', compact('capas', 'interacoes', 'foruns'));
+        return view('index', compact('capas', 'interacoes', 'postagens'));
     }
 
 

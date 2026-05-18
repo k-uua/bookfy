@@ -20,6 +20,7 @@ class Usuario extends Authenticatable
         'email',
         'senha',
         'xp',
+        'foto_perfil',
     ];
 
     protected $hidden = [
@@ -66,9 +67,9 @@ class Usuario extends Authenticatable
         return $this->hasMany(ComentarioLivro::class, 'id_usuario');
     }
 
-    public function comentariosTopico()
+    public function comentariosPostagem()
     {
-        return $this->hasMany(ComentarioTopico::class, 'id_usuario');
+        return $this->hasMany(ComentarioPostagem::class, 'id_usuario');
     }
 
     public function estantes()
@@ -76,14 +77,21 @@ class Usuario extends Authenticatable
         return $this->hasMany(Estante::class, 'id_usuario');
     }
 
-    public function topicos()
+    /** Postagens criadas pelo usuário no feed social. */
+    public function postagens()
     {
-        return $this->hasMany(Topico::class, 'id_usuario');
+        return $this->hasMany(Postagem::class, 'id_usuario');
     }
 
-    public function forums()
+    /** Postagens curtidas pelo usuário. */
+    public function postagensCurtidas()
     {
-        return $this->hasMany(Forum::class, 'id_usuario');
+        return $this->belongsToMany(
+            Postagem::class,
+            'postagem_likes',
+            'usuario_id',
+            'postagem_id'
+        );
     }
 
     public function conquistas()

@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\Usuario;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Usuario\AtualizarFotoRequest;
+use App\Http\Requests\Usuario\AtualizarPerfilRequest;
 use App\Http\Requests\Usuario\LoginRequest;
 use App\Http\Requests\Usuario\RegistroRequest;
 use App\Models\Usuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class UsuarioController extends Controller
 {
@@ -61,6 +65,26 @@ class UsuarioController extends Controller
         $xpParaSubir     = $xpProximoNivel - $xpNivelAtual;
         $progresso       = $xpParaSubir > 0 ? min(100, (int) ($xpNoNivel / $xpParaSubir * 100)) : 100;
 
+        $notasRecentes = $usuario->notas()
+            ->with('livro')
+            ->latest('criado_em')
+            ->take(10)
+            ->get();
+
+        $comentariosRecentes = $usuario->comentariosLivro()
+            ->with('livro')
+            ->whereNull('id_comentario_pai')
+            ->latest('criado_em')
+            ->take(8)
+            ->get();
+            
+        $livrosFavoritos = $usuario->estantes()
+            ->where('nome', 'Favoritos')
+            ->with('livros')
+            ->first()
+            ?->livros
+            ->take(8);
+        
         return view('usuario.perfil', compact(
             'usuario',
             'nivel',
@@ -68,7 +92,68 @@ class UsuarioController extends Controller
             'xpNoNivel',
             'xpParaSubir',
             'progresso',
+            'notasRecentes',
+            'comentariosRecentes',
+            'livrosFavoritos'
         ));
+    }
+
+    public function editarPerfil()
+    {
+        return view('usuario.editar', ['usuario' => Auth::user()]);
+    }
+
+    public function atualizarPerfil(AtualizarPerfilRequest $request)
+    {
+        /** @var \App\Models\Usuario $usuario */
+        $usuario = Auth::user();
+
+        if ($request->filled('nova_senha')) {
+            if (! Hash::check($request->senha_atual, $usuario->senha)) {
+                return back()
+                    ->withInput($request->except('senha_atual', 'nova_senha', 'nova_senha_confirmation'))
+                    ->withErrors(['senha_atual' => 'Senha atual incorreta.']);
+            }
+        }
+
+        $dados = $request->only('nome', 'email');
+
+        if ($request->filled('nova_senha')) {
+            $dados['senha'] = $request->nova_senha;
+        }
+
+        $usuario->update($dados);
+
+        return back()->with('success', 'Perfil atualizado com sucesso!');
+    }
+
+    public function removerFoto()
+    {
+        /** @var \App\Models\Usuario $usuario */
+        $usuario = Auth::user();
+
+        if ($usuario->foto_perfil) {
+            Storage::disk('public')->delete($usuario->foto_perfil);
+            $usuario->update(['foto_perfil' => null]);
+        }
+
+        return back()->with('success', 'Foto removida.');
+    }
+
+    public function atualizarFoto(AtualizarFotoRequest $request)
+    {
+        /** @var \App\Models\Usuario $usuario */
+        $usuario = Auth::user();
+
+        if ($usuario->foto_perfil) {
+            Storage::disk('public')->delete($usuario->foto_perfil);
+        }
+
+        $path = $request->file('foto')->store('fotos_perfil', 'public');
+
+        $usuario->update(['foto_perfil' => $path]);
+
+        return back()->with('success', 'Foto de perfil atualizada com sucesso!');
     }
 
     public function logout(Request $request)

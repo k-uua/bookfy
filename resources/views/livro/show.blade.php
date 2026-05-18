@@ -14,6 +14,11 @@
     $editora          = $info['publisher'] ?? null;
     $publicado        = $info['publishedDate'] ?? null;
 
+    $identificadores  = collect($info['industryIdentifiers'] ?? []);
+    $isbn             = $identificadores->firstWhere('type', 'ISBN_13')['identifier']
+                     ?? $identificadores->firstWhere('type', 'ISBN_10')['identifier']
+                     ?? null;
+
     // Hidden fields reutilizados em vários forms
     $hiddenLivro = [
         'google_books_id'   => $livro['id'] ?? '',
@@ -103,6 +108,56 @@
                     </svg>
                     Adicionar à minha estante
                 </button>
+
+                {{-- Botão · Favoritar --}}
+                <form action="{{ route('estante.favoritar') }}" method="post">
+                    @csrf
+                    @foreach ($hiddenLivro as $campo => $valor)
+                        <input type="hidden" name="{{ $campo }}" value="{{ $valor }}">
+                    @endforeach
+                    <button type="submit"
+                            class="w-full flex items-center gap-3 rounded-2xl px-5 py-4
+                                   text-sm text-left border transition-colors
+                                   {{ $isFavorito
+                                       ? 'bg-red-950/30 border-red-800/50 text-red-400 hover:bg-red-950/50'
+                                       : 'bg-[#161616] border-zinc-800/60 text-zinc-300 hover:bg-[#1a1a1a] hover:border-zinc-700 hover:text-white' }}">
+                        <svg class="w-4 h-4 shrink-0"
+                             fill="{{ $isFavorito ? 'currentColor' : 'none' }}"
+                             stroke="currentColor" stroke-width="2"
+                             viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                        </svg>
+                        {{ $isFavorito ? 'Favoritado' : 'Favoritar' }}
+                    </button>
+                </form>
+                {{-- Disponível para compra — só aparece se o livro tiver ISBN --}}
+                @if ($isbn)
+                    <div class="bg-[#161616] border border-zinc-800/60 rounded-2xl p-5">
+                        <p class="text-xs text-zinc-500 uppercase tracking-widest mb-3">Disponível em</p>
+
+                        <form action="{{ route('livros.linkCompra', $isbn) }}" method="post">
+                            @csrf
+                            <button type="submit"
+                                    class="w-full flex items-center gap-3 bg-zinc-900 hover:bg-zinc-800
+                                           border border-zinc-700/60 hover:border-zinc-600
+                                           rounded-xl px-4 py-3 transition-colors group">
+                                <img src="{{ asset('icon/amazon_icon.jpg') }}"
+                                     alt="Amazon"
+                                     class="w-9 h-9 rounded-lg object-cover shrink-0">
+                                <div class="text-left min-w-0">
+                                    <p class="text-white text-sm font-medium leading-tight">Amazon</p>
+                                    <p class="text-zinc-400 text-xs mt-0.5">Ver na loja</p>
+                                </div>
+                                <svg class="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 transition-colors ml-auto shrink-0"
+                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </button>
+                        </form>
+                    </div>
+                @endif
             @else
                 <div class="bg-[#161616] border border-zinc-800/60 rounded-2xl p-5">
                     <p class="text-sm text-zinc-400 mb-3">
@@ -311,10 +366,7 @@
                         {{-- Header: avatar + nome + data + nota --}}
                         <div class="flex items-start justify-between gap-4 mb-3">
                             <div class="flex items-center gap-3 min-w-0">
-                                <div class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center
-                                            text-white font-bold text-xs shrink-0">
-                                    {{ mb_strtoupper(mb_substr($comentario->usuario->nome ?? '?', 0, 1)) }}
-                                </div>
+                                <x-avatar :usuario="$comentario->usuario" size="lg" class="bg-blue-600" />
                                 <div class="min-w-0">
                                     <p class="font-semibold text-white text-sm truncate">
                                         {{ $comentario->usuario->nome ?? 'Usuário removido' }}
@@ -393,10 +445,7 @@
                                     <div class="bg-[#161616] border border-zinc-800/60 rounded-lg p-3">
                                         <div class="flex items-start justify-between gap-2 mb-1">
                                             <div class="flex items-center gap-2 min-w-0">
-                                                <div class="w-6 h-6 rounded-full bg-zinc-700 flex items-center justify-center
-                                                            text-white font-bold text-[10px] shrink-0">
-                                                    {{ mb_strtoupper(mb_substr($resposta->usuario->nome ?? '?', 0, 1)) }}
-                                                </div>
+                                                <x-avatar :usuario="$resposta->usuario" size="xs" class="bg-zinc-700" />
                                                 <span class="text-white text-xs font-semibold truncate">
                                                     {{ $resposta->usuario->nome ?? 'Usuário' }}
                                                 </span>

@@ -1,15 +1,6 @@
 @extends('layouts.main')
 @section('titulo', 'Início')
 
-@php
-$forunsPlaceholder = [
-    ['titulo' => 'Indicações de livros para começar a ler mais',     'descricao' => 'Está começando a criar o hábito da leitura? Compartilhe e descubra livros, acessórios e ideias para os que estão iniciando nessa jornada.', 'membros' => 15],
-    ['titulo' => 'Livros parecidos com Harry Potter',                 'descricao' => 'Procurando histórias com magia, aventura e mundos fantásticos como Harry Potter? Compartilhe e descubra novas leituras nesse estilo.',       'membros' => 5],
-    ['titulo' => 'Livros que te prenderam do início ao fim',          'descricao' => 'Está começando a criar o hábito da leitura? Compartilhe e descubra livros, acessórios e ideias para dar um primeiro passo.',                   'membros' => 10],
-    ['titulo' => 'Livros que mudaram sua perspectiva de vida',        'descricao' => 'Compartilhe aqueles livros que fizeram você pensar diferente e ver o mundo com outros olhos.',                                                  'membros' => 23],
-];
-@endphp
-
 @section('conteudo')
 
 {{-- ═══════════════════════════════════════════════════
@@ -103,10 +94,7 @@ $forunsPlaceholder = [
 
                         <div class="flex flex-wrap items-center gap-2 mb-3">
                             <div class="flex items-center gap-1.5">
-                                <div class="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center
-                                            text-white font-bold text-[10px] shrink-0">
-                                    {{ mb_strtoupper(mb_substr($usuario->nome ?? '?', 0, 1)) }}
-                                </div>
+                                <x-avatar :usuario="$usuario" size="xs" class="bg-blue-600" />
                                 <span class="text-zinc-400 text-xs">{{ $usuario->nome ?? 'Usuário' }}</span>
                             </div>
 
@@ -135,45 +123,57 @@ $forunsPlaceholder = [
 @endif
 
 {{-- ═══════════════════════════════════════════════════
-     SEÇÃO 4 · Fóruns da comunidade (preview)
+     SEÇÃO 4 · Postagens em destaque (preview do feed)
 ════════════════════════════════════════════════════ --}}
+@if ($postagens->isNotEmpty())
 <section class="py-14 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto">
 
         <x-section-header
-            titulo="Fóruns da comunidade"
-            subtitulo="Participe de discussões, tire dúvidas e compartilhe suas opiniões sobre livros."
+            titulo="Em alta na comunidade"
+            subtitulo="Postagens populares do feed do Bookfy — entre para participar."
         />
 
-        <div class="space-y-3">
-            @foreach ($foruns as $forum)
+        <div class="space-y-3 mx-auto">
+            @foreach ($postagens as $postagem)
                 <a href="{{ route('usuario.login') }}"
-                   class="flex items-center gap-4 rounded-2xl bg-[#161616] border border-zinc-800/60 px-5 py-4
-                          hover:border-zinc-600 transition-colors group">
+                   class="block bg-[#161616] border border-zinc-800/60 hover:border-zinc-700
+                          rounded-2xl p-5 transition-colors group">
 
-                    <div class="shrink-0 w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center
-                                group-hover:bg-zinc-700 transition-colors">
-                        <svg class="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                        </svg>
+                    {{-- Autor + data --}}
+                    <div class="flex items-center gap-2 mb-3">
+                        <x-avatar :usuario="$postagem->usuario" size="sm" class="bg-blue-600" />
+                        <span class="text-zinc-400 text-xs">
+                            {{ $postagem->usuario->nome ?? 'Usuário' }} ·
+                            {{ $postagem->criado_em->diffForHumans() }}
+                        </span>
                     </div>
 
-                    <div class="flex-1 min-w-0">
-                        <p class="font-semibold text-white text-sm truncate mb-0.5 group-hover:text-blue-400 transition-colors">
-                            {{ $forum->nome }}
-                        </p>
-                        <p class="text-zinc-500 text-xs leading-relaxed line-clamp-1">
-                            {{ $forum->descricao}}
-                        </p>
-                    </div>
+                    {{-- Título + conteúdo --}}
+                    <h3 class="text-white font-bold text-base sm:text-lg leading-snug mb-2
+                               group-hover:text-blue-400 transition-colors line-clamp-2">
+                        {{ $postagem->titulo }}
+                    </h3>
+                    <p class="text-zinc-400 text-sm leading-relaxed line-clamp-2 mb-3">
+                        {{ $postagem->conteudo }}
+                    </p>
 
-                    <div class="shrink-0 flex items-center gap-1.5 text-zinc-400 text-xs ml-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
-                        <span>{{ $forum->topicos->count() }} Membros</span>
+                    {{-- Métricas sociais --}}
+                    <div class="flex items-center gap-4 text-zinc-500 text-xs">
+                        <span class="flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                            </svg>
+                            {{ $postagem->likes_count }} {{ Str::plural('curtida', $postagem->likes_count) }}
+                        </span>
+                        <span class="flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                            </svg>
+                            {{ $postagem->comentarios_count }} {{ Str::plural('comentário', $postagem->comentarios_count) }}
+                        </span>
                     </div>
                 </a>
             @endforeach
@@ -181,5 +181,6 @@ $forunsPlaceholder = [
 
     </div>
 </section>
+@endif
 
 @endsection

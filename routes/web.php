@@ -1,12 +1,12 @@
 <?php
 
 use App\Http\Controllers\Estante\EstanteController;
-use App\Http\Controllers\Forum\ForumController;
-use App\Http\Controllers\Forum\TopicoController;
 use App\Http\Controllers\Index\IndexController;
 use App\Http\Controllers\Livro\ComentarioLivroController;
 use App\Http\Controllers\Livro\LivroController;
 use App\Http\Controllers\Livro\NotaController;
+use App\Http\Controllers\Postagem\ComentarioPostagemController;
+use App\Http\Controllers\Postagem\PostagemController;
 use App\Http\Controllers\Usuario\UsuarioController;
 use Illuminate\Support\Facades\Route;
 
@@ -18,7 +18,9 @@ Route::prefix('livros')->group(function () {
     Route::post('/avaliar', [NotaController::class, 'avaliar'])->name('livros.avaliar')->middleware('auth');
     Route::post('/comentar', [ComentarioLivroController::class, 'comentar'])->name('livros.comentar')->middleware('auth');
     Route::post('/comentarios/{comentario}/responder', [ComentarioLivroController::class, 'responder'])->name('livros.comentarios.responder')->middleware('auth');
+    Route::post('/link-compra/{ISBN}', [LivroController::class, 'linkCompra'])->name('livros.linkCompra')->middleware('auth');
     Route::delete('/comentarios/{comentario}', [ComentarioLivroController::class, 'deletar'])->name('livros.comentarios.deletar')->middleware('auth');
+    
 });
 
 Route::middleware('guest')->group(function () {
@@ -31,6 +33,10 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/home', [LivroController::class, 'home'])->name('home');
     Route::get('/perfil', [UsuarioController::class, 'perfil'])->name('usuario.perfil');
+    Route::get('/perfil/editar', [UsuarioController::class, 'editarPerfil'])->name('usuario.editar');
+    Route::put('/perfil', [UsuarioController::class, 'atualizarPerfil'])->name('usuario.atualizar');
+    Route::post('/perfil/foto', [UsuarioController::class, 'atualizarFoto'])->name('usuario.foto');
+    Route::delete('/perfil/foto', [UsuarioController::class, 'removerFoto'])->name('usuario.foto.remover');
     Route::post('/logout', [UsuarioController::class, 'logout'])->name('usuario.logout');
 
     Route::prefix('estantes')->group(function () {
@@ -40,13 +46,21 @@ Route::middleware('auth')->group(function () {
         Route::patch('/{estante}',   [EstanteController::class, 'update'])->name('estante.update');
         Route::delete('/{estante}',  [EstanteController::class, 'destroy'])->name('estante.destroy');
         Route::post('/adicionar',    [EstanteController::class, 'adicionar'])->name('estante.adicionar');
+        Route::post('/favoritar',    [EstanteController::class, 'toggleFavorito'])->name('estante.favoritar');
     });
 
-    Route::prefix('foruns')->name('forum.')->group(function () {
-        Route::get('/',                 [ForumController::class, 'index'])->name('index');
-        Route::get('/criar',            [ForumController::class, 'create'])->name('create');
-        Route::post('/',                [ForumController::class, 'store'])->name('store');
-        Route::get('/{forum}',          [ForumController::class, 'show'])->name('show');
-        Route::post('/{forum}/topicos', [TopicoController::class, 'store'])->name('topicos.store');
+    Route::prefix('postagens')->name('postagens.')->group(function () {
+        Route::get('/',                  [PostagemController::class, 'index'])->name('index');
+        Route::post('/',                 [PostagemController::class, 'store'])->name('store');
+        Route::get('/{postagem}',        [PostagemController::class, 'show'])->name('show');
+        Route::delete('/{postagem}',     [PostagemController::class, 'destroy'])->name('destroy');
+        Route::post('/{postagem}/like',  [PostagemController::class, 'toggleLike'])->name('like');
+
+        Route::post('/{postagem}/comentarios', [ComentarioPostagemController::class, 'store'])
+            ->name('comentarios.store');
+        Route::post('/comentarios/{comentario}/responder', [ComentarioPostagemController::class, 'responder'])
+            ->name('comentarios.responder');
+        Route::delete('/comentarios/{comentario}', [ComentarioPostagemController::class, 'destroy'])
+            ->name('comentarios.destroy');
     });
 });

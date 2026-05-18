@@ -108,11 +108,10 @@ $icones = [
 
                         <div class="flex flex-wrap items-center gap-2 mb-3">
                             <div class="flex items-center gap-1.5">
-                                <div class="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center
-                                            text-white font-bold text-[10px] shrink-0">
-                                    {{ mb_strtoupper(mb_substr($usuario->nome ?? '?', 0, 1)) }}
+                                <div class="flex items-center gap-1.5">
+                                    <x-avatar :usuario="$usuario" size="xs" class="bg-blue-600" />
+                                    <span class="text-zinc-400 text-xs">{{ $usuario->nome ?? 'Usuário' }}</span>
                                 </div>
-                                <span class="text-zinc-400 text-xs">{{ $usuario->nome ?? 'Usuário' }}</span>
                             </div>
 
                             @if ($interacao->notaUsuario)

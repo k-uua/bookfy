@@ -21,9 +21,9 @@
                 </a>
             </li>
             <li>
-                <a href="{{ Auth::check() ? route('forum.index') : route('usuario.login') }}"
-                   class="transition-colors {{ request()->routeIs('forum.*') ? 'text-white' : 'text-zinc-400 hover:text-white' }}">
-                    Fóruns
+                <a href="{{ Auth::check() ? route('postagens.index') : route('usuario.login') }}"
+                   class="transition-colors {{ request()->routeIs('postagens.*') ? 'text-white' : 'text-zinc-400 hover:text-white' }}">
+                    Feed
                 </a>
             </li>
             <li>
@@ -84,10 +84,7 @@
                 <div class="flex items-center gap-2">
                     <a href="{{ route('usuario.perfil') }}"
                        class="flex items-center gap-2 text-sm text-zinc-300 hover:text-white transition-colors">
-                        <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center
-                                    font-bold text-xs text-white shrink-0">
-                            {{ mb_strtoupper(mb_substr(Auth::user()->nome, 0, 1)) }}
-                        </div>
+                        <x-avatar :usuario="Auth::user()" size="md" class="bg-blue-600" />
                     </a>
                     <form action="{{ route('usuario.logout') }}" method="post" class="hidden md:block">
                         @csrf
@@ -119,9 +116,9 @@
            class="block text-sm py-2.5 px-3 rounded-lg text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">
             Início
         </a>
-        <a href="#"
+        <a href="{{ Auth::check() ? route('postagens.index') : route('usuario.login') }}"
            class="block text-sm py-2.5 px-3 rounded-lg text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">
-            Fóruns
+            Feed
         </a>
         <a href="#"
            class="block text-sm py-2.5 px-3 rounded-lg text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">

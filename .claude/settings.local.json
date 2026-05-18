@@ -8,7 +8,15 @@
       "WebFetch(domain:www.figma.com)",
       "Bash(ls \\\\\\\\wsl.localhost\\\\ubuntu\\\\home\\\\kaua\\\\projetos\\\\bookfy\\\\tailwind.config.js)",
       "Bash(cat \\\\\\\\wsl.localhost\\\\ubuntu\\\\home\\\\kaua\\\\projetos\\\\bookfy\\\\tailwind.config.js)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Read(//mnt/c/Users/Kaua/projetos/**)",
+      "Read(//c/Users/Kaua/projetos/**)",
+      "Bash(ls \"\\\\\\\\\\\\\\\\wsl.localhost\\\\\\\\ubuntu\\\\\\\\home\\\\\\\\kaua\\\\\\\\projetos\\\\\\\\bookfy\\\\\\\\database\\\\\\\\migrations\\\\\\\\\")",
+      "Bash(cd \"\\\\\\\\wsl.localhost\\\\ubuntu\\\\home\\\\kaua\\\\projetos\\\\bookfy\")",
+      "Bash(php artisan *)",
+      "Bash(wsl -d ubuntu -- bash -c \"cd /home/kaua/projetos/bookfy && php artisan migrate 2>&1\")",
+      "Bash(ls \"\\\\\\\\\\\\\\\\wsl.localhost\\\\\\\\ubuntu\\\\\\\\home\\\\\\\\kaua\\\\\\\\projetos\\\\\\\\bookfy\\\\\\\\database\\\\\\\\migrations\\\\\\\\\" | grep -E \"estante|livro\")",
+      "Bash(ls \"\\\\\\\\\\\\\\\\wsl.localhost\\\\\\\\ubuntu\\\\\\\\home\\\\\\\\kaua\\\\\\\\projetos\\\\\\\\bookfy\\\\\\\\database\\\\\\\\migrations\\\\\\\\\" | grep -E \"postagem|comentario\")"
     ]
   }
 }

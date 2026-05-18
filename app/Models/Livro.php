@@ -35,8 +35,9 @@ class Livro extends Model
         return $this->hasMany(ComentarioLivro::class, 'id_livro');
     }
 
-    public function topicos()
+    /** Postagens da comunidade que mencionam este livro. */
+    public function postagens()
     {
-        return $this->hasMany(Topico::class, 'id_livro');
+        return $this->hasMany(Postagem::class, 'id_livro');
     }
 }

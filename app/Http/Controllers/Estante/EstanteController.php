@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Estante;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Estante\AdicionarLivroRequest;
 use App\Http\Requests\Estante\EstanteRequest;
+use App\Http\Requests\Estante\FavoritoRequest;
 use App\Models\Estante;
 use App\Models\Livro;
 use Illuminate\Support\Facades\Auth;
@@ -70,6 +71,46 @@ class EstanteController extends Controller
         ]);
 
         return back()->with('success', '"' . $livro->titulo . '" adicionado à estante "' . $estante->nome . '"!');
+    }
+
+    public function toggleFavorito(FavoritoRequest $request)
+    {
+        $dados = $request->validated();
+
+        // Garante que o livro existe localmente.
+        $livro = Livro::firstOrCreate(
+            ['google_books_id' => $dados['google_books_id']],
+            [
+                'titulo'            => $dados['titulo'],
+                'capa_livro_url'    => $dados['capa_livro_url'] ?? null,
+                'descricao'         => $dados['descricao'] ?? null,
+                'paginas'           => $dados['paginas'] ?? null,
+                'data_lancamento'   => $dados['data_lancamento'] ?? null,
+                'nota_google_books' => $dados['nota_google_books'] ?? null,
+            ]
+        );
+
+        // Garante que a estante "Favoritos" existe para o usuário.
+        $estante = Estante::firstOrCreate([
+            'nome'       => 'Favoritos',
+            'id_usuario' => Auth::id(),
+        ]);
+
+        $jaFavoritado = $estante->livros()
+            ->where('livro.id', $livro->id)
+            ->exists();
+
+        if ($jaFavoritado) {
+            $estante->livros()->detach($livro->id);
+            return back()->with('success', '"' . $livro->titulo . '" removido dos favoritos.');
+        }
+
+        $estante->livros()->attach($livro->id, [
+            'status'   => 'quero_ler',
+            'favorito' => 1,
+        ]);
+
+        return back()->with('success', '"' . $livro->titulo . '" adicionado aos favoritos!');
     }
 
     /**

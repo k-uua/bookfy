@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Requests\Forum;
+namespace App\Http\Requests\Postagem;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 
-class CriarTopicoRequest extends FormRequest
+class ComentarioPostagemRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -19,16 +19,16 @@ class CriarTopicoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'titulo' => ['required', 'string', 'min:3', 'max:255'],
+            'texto' => ['required', 'string', 'min:3', 'max:1000'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'titulo.required' => 'Informe um título para o tópico.',
-            'titulo.min'      => 'O título deve ter pelo menos 3 caracteres.',
-            'titulo.max'      => 'O título deve ter no máximo 255 caracteres.',
+            'texto.required' => 'Escreva algo antes de comentar.',
+            'texto.min'      => 'O comentário deve ter pelo menos 3 caracteres.',
+            'texto.max'      => 'O comentário deve ter no máximo 1000 caracteres.',
         ];
     }
 }

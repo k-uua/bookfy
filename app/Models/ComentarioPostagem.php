@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class ComentarioTopico extends Model
+class ComentarioPostagem extends Model
 {
-    protected $table = 'comentario_topico';
+    protected $table = 'comentario_postagem';
 
     const CREATED_AT = 'criado_em';
     const UPDATED_AT = 'atualizado_em';
@@ -14,7 +14,7 @@ class ComentarioTopico extends Model
     protected $fillable = [
         'texto',
         'id_usuario',
-        'id_topico',
+        'id_postagem',
         'id_comentario_pai',
     ];
 
@@ -23,20 +23,20 @@ class ComentarioTopico extends Model
         return $this->belongsTo(Usuario::class, 'id_usuario');
     }
 
-    public function topico()
+    public function postagem()
     {
-        return $this->belongsTo(Topico::class, 'id_topico');
+        return $this->belongsTo(Postagem::class, 'id_postagem');
     }
 
     /** Comentário pai (para threads). */
     public function pai()
     {
-        return $this->belongsTo(ComentarioTopico::class, 'id_comentario_pai');
+        return $this->belongsTo(ComentarioPostagem::class, 'id_comentario_pai');
     }
 
     /** Respostas diretas a este comentário. */
     public function respostas()
     {
-        return $this->hasMany(ComentarioTopico::class, 'id_comentario_pai');
+        return $this->hasMany(ComentarioPostagem::class, 'id_comentario_pai');
     }
 }
