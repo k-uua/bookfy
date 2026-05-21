@@ -75,28 +75,123 @@
 
             {{-- Conquistas --}}
             <div class="mt-8">
-                <h2 class="text-white text-lg font-semibold mb-4">Conquistas</h2>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-white text-lg font-semibold">Conquistas</h2>
+                    @if ($conquistas->isNotEmpty())
+                        <a href="{{ route('conquistas.index') }}"
+                           class="text-xs text-zinc-400 hover:text-blue-400 transition-colors flex items-center gap-1">
+                            Ver todas
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </a>
+                    @endif
+                </div>
 
-                @if ($usuario->conquistas->isEmpty())
-                    <p class="text-zinc-500 text-sm">Nenhuma conquista desbloqueada ainda. Continue lendo!</p>
+                @if ($conquistas->isEmpty())
+                    <div class="flex flex-col items-start gap-3">
+                        <p class="text-zinc-500 text-sm">Nenhuma conquista desbloqueada ainda. Continue lendo!</p>
+                        <a href="{{ route('conquistas.index') }}"
+                           class="text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1">
+                            Ver conquistas disponíveis
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </a>
+                    </div>
                 @else
-                    <div class="flex flex-wrap gap-2">
-                        @foreach ($usuario->conquistas as $conquista)
-                            <div class="flex items-center gap-2.5 bg-zinc-900 border border-zinc-800
-                                        rounded-xl px-3.5 py-2.5 hover:border-zinc-700 transition-colors">
-                                <span class="text-base leading-none" aria-hidden="true">🏅</span>
-                                <div class="min-w-0">
-                                    <div class="text-white text-sm font-medium leading-tight">
-                                        {{ $conquista->nome }}
+                    {{-- Ícones das últimas 6 conquistas --}}
+                    <div class="flex flex-wrap items-end gap-3">
+                        @foreach ($conquistas->take(6) as $conquista)
+                            @php
+                                $iconePath = $conquista->icone;
+                                $nivelCor  = match($conquista->nivel_conquista) {
+                                    'ouro'   => 'text-amber-400',
+                                    'prata'  => 'text-zinc-300',
+                                    default  => 'text-amber-600',
+                                };
+                            @endphp
+                            <div class="relative group/badge">
+                                {{-- Ícone sem fundo --}}
+                                <div class="w-12 h-12 transition-transform duration-200
+                                            group-hover/badge:scale-110 cursor-default">
+                                    @if ($iconePath)
+                                        <img src="{{ asset($iconePath) }}"
+                                             alt="{{ $conquista->titulo }}"
+                                             class="w-full h-full object-contain">
+                                    @else
+                                        {{-- fallback: medalha --}}
+                                        <span class="text-4xl leading-none {{ $nivelCor }}">
+                                            {{ $conquista->medalha() }}
+                                        </span>
+                                    @endif
+                                </div>
+
+                                {{-- Tooltip --}}
+                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 z-50 w-52
+                                            opacity-0 group-hover/badge:opacity-100 pointer-events-none
+                                            transition-opacity duration-150
+                                            bg-zinc-900 border border-zinc-700/70 rounded-xl
+                                            shadow-xl shadow-black/60 px-3.5 py-3">
+                                    {{-- Seta --}}
+                                    <div class="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0
+                                                border-l-[6px] border-l-transparent
+                                                border-r-[6px] border-r-transparent
+                                                border-t-[6px] border-t-zinc-700/70"></div>
+
+                                    {{-- Cabeçalho --}}
+                                    <div class="flex items-center gap-1.5 mb-1.5">
+                                        <span class="text-sm leading-none">{{ $conquista->medalha() }}</span>
+                                        <span class="text-white text-xs font-semibold leading-tight">
+                                            {{ $conquista->titulo }}
+                                        </span>
                                     </div>
+
+                                    {{-- Badge de nível --}}
+                                    <span class="inline-block text-[10px] font-semibold rounded-full px-2 py-0.5 mb-2
+                                                 {{ $nivelCor }}
+                                                 bg-zinc-800 border border-zinc-700/60">
+                                        {{ ucfirst($conquista->nivel_conquista) }}
+                                    </span>
+
+                                    {{-- Descrição --}}
                                     @if ($conquista->descricao)
-                                        <div class="text-zinc-500 text-xs mt-0.5 leading-snug">
+                                        <p class="text-zinc-400 text-[11px] leading-snug">
                                             {{ $conquista->descricao }}
-                                        </div>
+                                        </p>
+                                    @endif
+
+                                    {{-- XP --}}
+                                    @if ($conquista->xp)
+                                        <p class="text-blue-400 text-[10px] font-semibold mt-2">
+                                            ⚡ +{{ $conquista->xp }} XP
+                                        </p>
                                     @endif
                                 </div>
                             </div>
                         @endforeach
+
+                        {{-- Link "ver mais" se houver mais de 6 --}}
+                        @if ($conquistas->count() > 6)
+                            <a href="{{ route('conquistas.index') }}"
+                               class="text-zinc-600 hover:text-zinc-300 text-xs font-medium transition-colors
+                                      leading-tight self-center">
+                                +{{ $conquistas->count() - 6 }}
+                            </a>
+                        @endif
+                    </div>
+
+                    {{-- Estatísticas rápidas --}}
+                    <div class="flex items-center gap-4 mt-3 text-xs text-zinc-600">
+                        @php
+                            $cBronze = $conquistas->filter(fn($c) => $c->nivel_conquista === 'bronze')->count();
+                            $cPrata  = $conquistas->filter(fn($c) => $c->nivel_conquista === 'prata')->count();
+                            $cOuro   = $conquistas->filter(fn($c) => $c->nivel_conquista === 'ouro')->count();
+                        @endphp
+                        @if ($cBronze) <span>🥉 {{ $cBronze }}</span> @endif
+                        @if ($cPrata)  <span>🥈 {{ $cPrata }}</span>  @endif
+                        @if ($cOuro)   <span>🥇 {{ $cOuro }}</span>   @endif
+                        <span class="text-blue-500/70">⚡ {{ number_format($conquistas->sum('xp')) }} XP</span>
                     </div>
                 @endif
             </div>

@@ -96,11 +96,6 @@ class Usuario extends Authenticatable
 
     public function conquistas()
     {
-        return $this->belongsToMany(
-            Conquista::class,
-            'usuario_conquista',
-            'id_usuario',
-            'id_conquista'
-        );
+        return $this->hasMany(UsuarioConquista::class, 'id_usuario');
     }
 }

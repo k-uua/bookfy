@@ -164,41 +164,68 @@ class LivroController extends Controller
     }
 
     /**
-     * Calcula o progresso do usuário em direção às conquistas.
-     * Retorna um array de conquistas com atual/meta/percentual.
+     * Calcula o progresso do usuário em direção às conquistas definidas em
+     * config/conquistas.php. Conquistas com níveis mostram o próximo nível
+     * pendente; conquistas únicas mostram 0% ou 100%.
      */
     private function calcularProgresso($usuario): array
     {
-        $conquistas = [
-            [
-                'titulo'    => 'Crítico iniciante',
-                'descricao' => 'Avalie 10 livros',
-                'atual'     => $usuario->notas()->count(),
-                'meta'      => 10,
-                'icone'     => 'star',
-            ],
-            [
-                'titulo'    => 'Participante ativo',
-                'descricao' => 'Poste 5 comentários',
-                'atual'     => $usuario->comentariosLivro()->count(),
-                'meta'      => 5,
-                'icone'     => 'chat',
-            ],
-            [
-                'titulo'    => 'Colecionador',
-                'descricao' => 'Crie 3 estantes',
-                'atual'     => $usuario->estantes()->count(),
-                'meta'      => 3,
-                'icone'     => 'shelf',
-            ],
+        // Mapa: codigo_conquista → callable que retorna o valor atual
+        $metricas = [
+            'colecionador_literario'    => fn () => $usuario->estantes()
+                ->withCount('livros')
+                ->get()
+                ->sum('livros_count'),
+            'primeira_estante'          => fn () => min(1, $usuario->estantes()->count()),
+            'primeiro_livro_favoritado' => fn () => min(1,
+                $usuario->estantes()
+                    ->where('nome', 'Favoritos')
+                    ->withCount('livros')
+                    ->first()?->livros_count ?? 0
+            ),
         ];
 
-        return array_map(function ($c) {
-            $c['percentual'] = $c['meta'] > 0
-                ? min(100, (int) round($c['atual'] / $c['meta'] * 100))
-                : 0;
-            return $c;
-        }, $conquistas);
+        // Ícone por categoria (alinhado com home.blade.php)
+        $icones = ['progresso' => 'shelf', 'social' => 'chat', 'leitura' => 'star'];
+
+        $resultado = [];
+
+        foreach (config('conquistas', []) as $codigo => $def) {
+            $atual = isset($metricas[$codigo]) ? ($metricas[$codigo])() : 0;
+
+            if (!empty($def['possui_niveis'])) {
+                // Exibe apenas o próximo nível ainda não alcançado
+                foreach (['bronze', 'prata', 'ouro'] as $nivel) {
+                    $nivelDef = $def['niveis'][$nivel] ?? null;
+                    if (! $nivelDef) {
+                        continue;
+                    }
+                    $meta = (int) ($nivelDef['meta'] ?? 1);
+                    if ($atual < $meta) {
+                        $resultado[] = [
+                            'titulo'     => ($def['titulo'] ?? $codigo) . ' — ' . ucfirst($nivel),
+                            'descricao'  => $nivelDef['descricao'] ?? '',
+                            'atual'      => $atual,
+                            'meta'       => $meta,
+                            'icone'      => $icones[$def['categoria'] ?? ''] ?? 'star',
+                            'percentual' => min(100, (int) round($atual / $meta * 100)),
+                        ];
+                        break;
+                    }
+                }
+            } else {
+                $resultado[] = [
+                    'titulo'     => $def['titulo'] ?? $codigo,
+                    'descricao'  => $def['descricao'] ?? '',
+                    'atual'      => $atual,
+                    'meta'       => 1,
+                    'icone'      => $icones[$def['categoria'] ?? ''] ?? 'star',
+                    'percentual' => $atual >= 1 ? 100 : 0,
+                ];
+            }
+        }
+
+        return $resultado;
     }
 
 

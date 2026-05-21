@@ -56,6 +56,8 @@ class UsuarioController extends Controller
         /** @var \App\Models\Usuario $usuario */
 
         $usuario = Auth::user()->load(['conquistas', 'notas', 'estantes']);
+        /** @var \Illuminate\Database\Eloquent\Collection $conquistas */
+        $conquistas = $usuario->conquistas;
 
         $xp              = $usuario->xp ?? 0;
         $nivel           = $usuario->nivel;
@@ -92,6 +94,7 @@ class UsuarioController extends Controller
             'xpNoNivel',
             'xpParaSubir',
             'progresso',
+            'conquistas',
             'notasRecentes',
             'comentariosRecentes',
             'livrosFavoritos'

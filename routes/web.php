@@ -6,6 +6,7 @@ use App\Http\Controllers\Livro\ComentarioLivroController;
 use App\Http\Controllers\Livro\LivroController;
 use App\Http\Controllers\Livro\NotaController;
 use App\Http\Controllers\Postagem\ComentarioPostagemController;
+use App\Http\Controllers\Conquista\ConquistaController;
 use App\Http\Controllers\Postagem\PostagemController;
 use App\Http\Controllers\Usuario\UsuarioController;
 use Illuminate\Support\Facades\Route;
@@ -38,6 +39,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/perfil/foto', [UsuarioController::class, 'atualizarFoto'])->name('usuario.foto');
     Route::delete('/perfil/foto', [UsuarioController::class, 'removerFoto'])->name('usuario.foto.remover');
     Route::post('/logout', [UsuarioController::class, 'logout'])->name('usuario.logout');
+    Route::get('/conquistas', [ConquistaController::class, 'index'])->name('conquistas.index');
 
     Route::prefix('estantes')->group(function () {
         Route::get('/',              [EstanteController::class, 'index'])->name('estante.index');

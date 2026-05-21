@@ -8,6 +8,7 @@ use App\Http\Requests\Estante\EstanteRequest;
 use App\Http\Requests\Estante\FavoritoRequest;
 use App\Models\Estante;
 use App\Models\Livro;
+use App\Services\ConquistaService;
 use Illuminate\Support\Facades\Auth;
 
 class EstanteController extends Controller
@@ -70,6 +71,11 @@ class EstanteController extends Controller
             'favorito' => 0,
         ]);
 
+        // Verifica conquistas afetadas por adicionar livro à estante
+        $service = app(ConquistaService::class);
+        $novas   = $service->verificar(Auth::user(), ['colecionador_literario']);
+        $service->flashNovas($novas);
+
         return back()->with('success', '"' . $livro->titulo . '" adicionado à estante "' . $estante->nome . '"!');
     }
 
@@ -109,6 +115,14 @@ class EstanteController extends Controller
             'status'   => 'quero_ler',
             'favorito' => 1,
         ]);
+
+        // Verifica conquistas afetadas por favoritar
+        $service = app(ConquistaService::class);
+        $novas   = $service->verificar(Auth::user(), [
+            'primeiro_livro_favoritado',
+            'colecionador_literario',
+        ]);
+        $service->flashNovas($novas);
 
         return back()->with('success', '"' . $livro->titulo . '" adicionado aos favoritos!');
     }

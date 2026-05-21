@@ -16,7 +16,11 @@
       "Bash(php artisan *)",
       "Bash(wsl -d ubuntu -- bash -c \"cd /home/kaua/projetos/bookfy && php artisan migrate 2>&1\")",
       "Bash(ls \"\\\\\\\\\\\\\\\\wsl.localhost\\\\\\\\ubuntu\\\\\\\\home\\\\\\\\kaua\\\\\\\\projetos\\\\\\\\bookfy\\\\\\\\database\\\\\\\\migrations\\\\\\\\\" | grep -E \"estante|livro\")",
-      "Bash(ls \"\\\\\\\\\\\\\\\\wsl.localhost\\\\\\\\ubuntu\\\\\\\\home\\\\\\\\kaua\\\\\\\\projetos\\\\\\\\bookfy\\\\\\\\database\\\\\\\\migrations\\\\\\\\\" | grep -E \"postagem|comentario\")"
+      "Bash(ls \"\\\\\\\\\\\\\\\\wsl.localhost\\\\\\\\ubuntu\\\\\\\\home\\\\\\\\kaua\\\\\\\\projetos\\\\\\\\bookfy\\\\\\\\database\\\\\\\\migrations\\\\\\\\\" | grep -E \"postagem|comentario\")",
+      "Bash(ls \"//wsl.localhost/ubuntu/home/kaua/projetos/bookfy/database/migrations/\" | sort)",
+      "Bash(ls \"//wsl.localhost/ubuntu/home/kaua/projetos/bookfy/config/\" | sort)",
+      "Read(///wsl.localhost/ubuntu/home/kaua/projetos/**)",
+      "Bash(./vendor/bin/sail artisan *)"
     ]
   }
 }
