@@ -6,24 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Models\ComentarioLivro;
 use App\Models\Livro;
 use App\Models\Nota;
+use App\Services\GoogleBooksService;
+use App\Services\RecomendacaoService;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Http\Client\Pool;
-use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+
 class LivroController extends Controller
 {
-    private function apiUrl(string $caminho = ''): string
-    {
-        return rtrim(config('services.google_books.url'), '/') . $caminho;
-    }
-
-    private function apiKey(): string
-    {
-        return config('services.google_books.key', '');
-    }
+    public function __construct(
+        private GoogleBooksService $googleBooks,
+        private RecomendacaoService $recomendacoes,
+    ) {}
 
     /**
      * Home autenticada — exibe recomendações personalizadas, livros mais bem
@@ -34,8 +29,8 @@ class LivroController extends Controller
         $usuario = Auth::user();
 
         return view('home', [
-            'recomendados'      => $this->buscarRecomendados(),
-            'melhoresAvaliados' => $this->buscarMelhoresAvaliados(),
+            'recomendados'      => $this->recomendacoes->paraUsuario($usuario->id),
+            'melhoresAvaliados' => $this->googleBooks->melhoresAvaliados(),
             'interacoes'        => $this->buscarInteracoesRecentes(3),
             'progresso'         => $this->calcularProgresso($usuario),
         ]);
@@ -71,106 +66,12 @@ class LivroController extends Controller
     }
 
     /**
-     * Livros sugeridos para o usuário — pega títulos populares mesclando
-     * múltiplos gêneros para dar variedade na primeira aparição.
-     */
-    private function buscarRecomendados(): array
-    {
-        return Cache::remember('home_recomendados_v1', now()->addHours(2), function () {
-            $generos = ['fiction', 'fantasy', 'romance'];
-
-            try {
-                $respostas = Http::pool(fn (Pool $pool) => array_map(
-                    fn ($g) => $pool->timeout(5)->get($this->apiUrl('/volumes'), [
-                        'q'            => "subject:{$g}",
-                        'maxResults'   => 6,
-                        'orderBy'      => 'relevance',
-                        'printType'    => 'books',
-                        'langRestrict' => 'en',
-                        'key'          => $this->apiKey(),
-                    ]),
-                    $generos
-                ));
-
-                return collect($respostas)
-                    ->flatMap(fn ($r) => ($r instanceof Response && $r->successful())
-                        ? ($r->json()['items'] ?? []) : [])
-                    ->filter(fn ($item) => $this->capasValidas($item))
-                    ->map(fn ($item) => $this->normalizarLivro($item))
-                    ->unique('id')
-                    ->shuffle()
-                    ->take(5)
-                    ->values()
-                    ->all();
-            } catch (\Throwable) {
-                return [];
-            }
-        });
-    }
-
-    /**
-     * Livros com nota média alta (>= 4.0) entre títulos populares.
-     */
-    private function buscarMelhoresAvaliados(): array
-    {
-        return Cache::remember('home_top_rated_v1', now()->addHours(2), function () {
-            try {
-                $resposta = Http::timeout(6)->get($this->apiUrl('/volumes'), [
-                    'q'            => 'subject:fiction',
-                    'maxResults'   => 30,
-                    'orderBy'      => 'relevance',
-                    'printType'    => 'books',
-                    'langRestrict' => 'en',
-                    'key'          => $this->apiKey(),
-                ]);
-
-                if ($resposta->failed()) {
-                    return [];
-                }
-
-                return collect($resposta->json()['items'] ?? [])
-                    ->filter(fn ($item) => $this->capasValidas($item)
-                        && (($item['volumeInfo']['averageRating'] ?? 0) >= 4))
-                    ->map(fn ($item) => $this->normalizarLivro($item))
-                    ->sortByDesc('rating')
-                    ->take(5)
-                    ->values()
-                    ->all();
-            } catch (\Throwable) {
-                return [];
-            }
-        });
-    }
-
-    /**
-     * Normaliza um item da API Google Books para um array enxuto consumido
-     * pela view (componente <x-book-card />).
-     */
-    private function normalizarLivro(array $item): array
-    {
-        $info = $item['volumeInfo'] ?? [];
-
-        return [
-            'id'         => $item['id'] ?? null,
-            'titulo'     => $info['title'] ?? 'Sem título',
-            'autores'    => $info['authors'] ?? [],
-            'capa'       => str_replace('http://', 'https://',
-                $info['imageLinks']['thumbnail']
-                ?? $info['imageLinks']['smallThumbnail']
-                ?? ''),
-            'rating'     => round((float) ($info['averageRating'] ?? 0), 1),
-            'lancamento' => $info['publishedDate'] ?? null,
-        ];
-    }
-
-    /**
      * Calcula o progresso do usuário em direção às conquistas definidas em
      * config/conquistas.php. Conquistas com níveis mostram o próximo nível
      * pendente; conquistas únicas mostram 0% ou 100%.
      */
     private function calcularProgresso($usuario): array
     {
-        // Mapa: codigo_conquista → callable que retorna o valor atual
         $metricas = [
             'colecionador_literario'    => fn () => $usuario->estantes()
                 ->withCount('livros')
@@ -185,7 +86,6 @@ class LivroController extends Controller
             ),
         ];
 
-        // Ícone por categoria (alinhado com home.blade.php)
         $icones = ['progresso' => 'shelf', 'social' => 'chat', 'leitura' => 'star'];
 
         $resultado = [];
@@ -193,8 +93,7 @@ class LivroController extends Controller
         foreach (config('conquistas', []) as $codigo => $def) {
             $atual = isset($metricas[$codigo]) ? ($metricas[$codigo])() : 0;
 
-            if (!empty($def['possui_niveis'])) {
-                // Exibe apenas o próximo nível ainda não alcançado
+            if (! empty($def['possui_niveis'])) {
                 foreach (['bronze', 'prata', 'ouro'] as $nivel) {
                     $nivelDef = $def['niveis'][$nivel] ?? null;
                     if (! $nivelDef) {
@@ -228,37 +127,6 @@ class LivroController extends Controller
         return $resultado;
     }
 
-
-    /**
-     * Valida se um item da API é adequado para o mosaico:
-     *  — Deve ter imagem de capa.
-     *  — Deve ter ISBN (livros pré-copyright muitas vezes não têm ISBN registrado,
-     *    o que ajuda a filtrar domínio público obscuro).
-     *  — Se a data de publicação estiver presente, deve ser >= 1970.
-     */
-    private function capasValidas(array $item): bool
-    {
-        $info = $item['volumeInfo'] ?? [];
-
-        if (empty($info['imageLinks'])) {
-            return false;
-        }
-
-        if (empty($info['industryIdentifiers'])) {
-            return false;
-        }
-
-        $dataPublicacao = $info['publishedDate'] ?? '';
-        if ($dataPublicacao !== '') {
-            $ano = (int) substr($dataPublicacao, 0, 4);
-            if ($ano > 0 && $ano < 1970) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     public function buscar(Request $request)
     {
         $query = trim($request->input('buscar', ''));
@@ -269,38 +137,21 @@ class LivroController extends Controller
 
         $pagina    = (int) $request->input('page', 1);
         $porPagina = 20;
-
-        // Buscamos o dobro por página para ter candidatos suficientes ao reordenar.
-        $buscarMax  = $porPagina * 2;
+        $buscarMax = $porPagina * 2;
         $startIndex = ($pagina - 1) * $buscarMax;
 
-        $response = Http::get($this->apiUrl('/volumes'), [
-            'q'          => $query,
-            'startIndex' => $startIndex,
-            'maxResults' => $buscarMax,
-            'orderBy'    => 'relevance',
-            'printType'  => 'books',
-            'key'        => $this->apiKey(),
-        ]);
-
-        if ($response->failed()) {
-            return back()->withErrors(['erro' => 'Falha na busca. Tente novamente.']);
-        }
-
-        $dados = $response->json();
-        $itens = $dados['items'] ?? [];
-        $total = min($dados['totalItems'] ?? 0, 1000);
+        $dados = $this->googleBooks->buscar($query, $startIndex, $buscarMax);
+        $total = min($dados['totalItems'], 1000);
 
         // ── Pontuação local de relevância ─────────────────────────────────────
         $queryNorm = mb_strtolower($query);
 
-        $ordenados = collect($itens)
+        $ordenados = collect($dados['items'])
             ->map(function (array $item) use ($queryNorm): array {
                 $info   = $item['volumeInfo'] ?? [];
                 $titulo = mb_strtolower($info['title'] ?? '');
                 $score  = 0;
 
-                // Correspondência no título (peso alto)
                 if ($titulo === $queryNorm) {
                     $score += 80;
                 } elseif (str_starts_with($titulo, $queryNorm)) {
@@ -309,17 +160,14 @@ class LivroController extends Controller
                     $score += 45;
                 }
 
-                // Sinais de qualidade do item
-                if (!empty($info['imageLinks']))  $score += 100; // tem capa
-                if (!empty($info['description'])) $score += 5;  // tem sinopse
+                if (!empty($info['imageLinks']))  $score += 100;
+                if (!empty($info['description'])) $score += 5;
 
-                $qtdAvaliacoes = (int) ($info['ratingsCount']  ?? 0);
+                $qtdAvaliacoes = (int) ($info['ratingsCount']   ?? 0);
                 $mediaNotas    = (float) ($info['averageRating'] ?? 0);
 
                 if ($qtdAvaliacoes > 0) {
-                    // Escala logarítmica: 10 avaliações ≈ +8 pts, 1000 ≈ +24 pts
                     $score += (int) (log10($qtdAvaliacoes + 1) * 8);
-                    // Nota média: máximo +10 pontos (para 5 estrelas)
                     $score += (int) ($mediaNotas * 2);
                 }
 
@@ -346,19 +194,16 @@ class LivroController extends Controller
 
     public function show($id)
     {
-        $response = Http::get($this->apiUrl("/volumes/{$id}"), [
-            'key' => $this->apiKey(),
-        ]);
+        $livro = $this->googleBooks->volume($id);
 
-        if ($response->failed()) {
+        if (! $livro) {
             abort(404);
         }
 
-        $livro = $response->json();
-
         $idioma    = $livro['volumeInfo']['language'] ?? 'en';
         $descricao = $livro['volumeInfo']['description'] ?? null;
-        $isbn = $livro['volumeInfo']['industryIdentifiers'][0]['identifier'] ?? null;
+        $isbn      = $livro['volumeInfo']['industryIdentifiers'][0]['identifier'] ?? null;
+
         if ($descricao && ! str_starts_with($idioma, 'pt')) {
             $livro['volumeInfo']['description'] = $this->traduzir($descricao);
         }
@@ -369,31 +214,27 @@ class LivroController extends Controller
         $livroLocal  = Livro::where('google_books_id', $id)->first();
         $comentarios = $livroLocal ? ComentarioLivro::doLivro($livroLocal->id) : collect();
 
-        $notaUsuario          = null;
-        $notasPorUsuario      = collect();
-        $notaBookfy           = null;
+        $notaUsuario           = null;
+        $notasPorUsuario       = collect();
+        $notaBookfy            = null;
         $totalAvaliacoesBookfy = 0;
 
         if ($livroLocal) {
-            // Nota do usuário autenticado para exibir no widget de estrelas.
             if (Auth::check()) {
                 $notaUsuario = Nota::where('id_usuario', Auth::id())
                     ->where('id_livro', $livroLocal->id)
                     ->first();
             }
 
-            // Notas de todos os comentadores em uma única query (evita N+1).
             $notasPorUsuario = Nota::where('id_livro', $livroLocal->id)
                 ->get()
                 ->keyBy('id_usuario');
 
-            // Média Bookfy — derivada do conjunto já carregado (sem query extra).
             if ($notasPorUsuario->isNotEmpty()) {
                 $notaBookfy            = round($notasPorUsuario->avg('nota'), 1);
                 $totalAvaliacoesBookfy = $notasPorUsuario->count();
             }
 
-            // Verifica se o livro está na estante "Favoritos" do usuário autenticado.
             if (Auth::check()) {
                 $estanteFavoritos = Auth::user()
                     ->estantes()
@@ -423,29 +264,16 @@ class LivroController extends Controller
 
     public function categorias(Request $request)
     {
-        $query     = $request->input('categoria');
-        $pagina    = (int) $request->input('page', 1);
-        $porPagina = 10;
+        $query      = $request->input('categoria');
+        $pagina     = (int) $request->input('page', 1);
+        $porPagina  = 10;
         $startIndex = ($pagina - 1) * $porPagina;
 
-        $response = Http::get($this->apiUrl('/volumes'), [
-            'q'          => 'subject:' . $query,
-            'startIndex' => $startIndex,
-            'maxResults' => $porPagina,
-            'key'        => $this->apiKey(),
-        ]);
-
-        if ($response->failed()) {
-            return back()->withErrors(['erro' => 'Não foi possível carregar a categoria. Tente novamente.']);
-        }
-
-        $dados = $response->json();
-
-        $livros = $dados['items'] ?? [];
-        $total  = min($dados['totalItems'] ?? 0, 1000);
+        $dados = $this->googleBooks->porCategoria($query, $startIndex, $porPagina);
+        $total = min($dados['totalItems'], 1000);
 
         $paginacao = new LengthAwarePaginator(
-            $livros,
+            $dados['items'],
             $total,
             $porPagina,
             $pagina,

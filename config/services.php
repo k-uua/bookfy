@@ -17,6 +17,10 @@ return [
         'url' => env('GOOGLE_BOOKS_API_URL'),
         'key' => env('GOOGLE_BOOKS_API_KEY'),
     ],
+    'recomendacao' => [
+        'url'   => env('RECOMENDACAO_URL', 'http://localhost:8000'),
+        'token' => env('RECOMENDACAO_SECRET', ''),
+    ],
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],

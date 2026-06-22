@@ -30,7 +30,7 @@
             placeholder="••••••••"
             required
         />
-
+{{-- 
         <label class="flex items-center gap-2 text-sm text-zinc-400 cursor-pointer select-none pt-1">
             <input
                 type="checkbox"
@@ -41,7 +41,7 @@
                        focus:ring-1 focus:ring-blue-500/40 focus:ring-offset-0"
             >
             Lembrar de mim
-        </label>
+        </label> --}}
 
         <x-primary-button block class="mt-2">
             Entrar

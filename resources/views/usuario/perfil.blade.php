@@ -223,9 +223,32 @@
 
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-14">
 
-    <h2 class="text-zinc-400 text-sm font-medium uppercase tracking-widest mb-5">
-        Livros favoritos
-    </h2>
+    <div class="flex items-center justify-between mb-5 gap-4">
+        <h2 class="text-zinc-400 text-sm font-medium uppercase tracking-widest">
+            Livros favoritos
+        </h2>
+
+        @if (! $favs->isEmpty())
+            <div class="flex gap-2 shrink-0">
+                <button type="button"
+                        data-carousel-prev="carousel-favoritos"
+                        class="w-8 h-8 rounded-full border border-zinc-700 text-zinc-400
+                               hover:border-white hover:text-white flex items-center justify-center
+                               text-sm transition-colors"
+                        aria-label="Anterior">
+                    &#8592;
+                </button>
+                <button type="button"
+                        data-carousel-next="carousel-favoritos"
+                        class="w-8 h-8 rounded-full border border-zinc-700 text-zinc-400
+                               hover:border-white hover:text-white flex items-center justify-center
+                               text-sm transition-colors"
+                        aria-label="Próximo">
+                    &#8594;
+                </button>
+            </div>
+        @endif
+    </div>
 
     @if ($favs->isEmpty())
         <p class="text-zinc-600 text-sm">Nenhum livro favorito adicionado ainda.</p>
@@ -297,9 +320,32 @@
 ══════════════════════════════════════════════════════════ --}}
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-14">
 
-    <h2 class="text-zinc-400 text-sm font-medium uppercase tracking-widest mb-5">
-        Avaliações recentes
-    </h2>
+    <div class="flex items-center justify-between mb-5 gap-4">
+        <h2 class="text-zinc-400 text-sm font-medium uppercase tracking-widest">
+            Avaliações recentes
+        </h2>
+
+        @if (! $notasRecentes->isEmpty())
+            <div class="flex gap-2 shrink-0">
+                <button type="button"
+                        data-carousel-prev="carousel-notas"
+                        class="w-8 h-8 rounded-full border border-zinc-700 text-zinc-400
+                               hover:border-white hover:text-white flex items-center justify-center
+                               text-sm transition-colors"
+                        aria-label="Anterior">
+                    &#8592;
+                </button>
+                <button type="button"
+                        data-carousel-next="carousel-notas"
+                        class="w-8 h-8 rounded-full border border-zinc-700 text-zinc-400
+                               hover:border-white hover:text-white flex items-center justify-center
+                               text-sm transition-colors"
+                        aria-label="Próximo">
+                    &#8594;
+                </button>
+            </div>
+        @endif
+    </div>
 
     @if ($notasRecentes->isEmpty())
         <p class="text-zinc-600 text-sm">Nenhuma avaliação feita ainda.</p>
@@ -312,7 +358,7 @@
 
                 @foreach ($notasRecentes as $nota)
                     @php $livro = $nota->livro; @endphp
-                    <a href="{{ route('livros.show', $livro->id) }}"
+                    <a href="{{ route('livros.show', $livro->google_books_id) }}"
                        class="shrink-0 w-36 sm:w-40 group block focus:outline-none focus-visible:ring-2
                               focus-visible:ring-blue-500 rounded-2xl"
                        title="{{ $livro->titulo }}">
@@ -379,7 +425,7 @@
 
                         {{-- Capa do livro --}}
                         @if ($livro)
-                            <a href="{{ route('livros.show', $livro->id) }}"
+                            <a href="{{ route('livros.show', $livro->google_books_id) }}"
                                class="shrink-0 w-12 self-start group/cover" title="{{ $livro->titulo }}">
                                 <div class="aspect-[2/3] rounded-lg overflow-hidden bg-zinc-800
                                             ring-1 ring-zinc-700/60 transition-shadow group-hover/cover:ring-zinc-600">
